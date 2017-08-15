@@ -3,15 +3,15 @@ package com.lezhi.indicator;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Build;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,13 +30,9 @@ public class ScrollIndicator extends HorizontalScrollView {
     private View mIndicator;
     private int mPosition;
     private List<Item> mItems;
-
-    private int mItemBgColor;
-    private int mItemTextColor;
-
-    private int mItemSelectedBgColor;
-    private int mItemSelectedTextColor;
-
+    private ViewPager mViewPager;
+    private ViewPager.OnPageChangeListener mOnPageChangeListener;
+    private PagerAdapter mAdapter;
 
     public ScrollIndicator(Context context) {
         this(context, null);
@@ -79,24 +75,8 @@ public class ScrollIndicator extends HorizontalScrollView {
         });
     }
 
-    public void setData(List<String> itemTexts) {
-        for (int position = 0; position < itemTexts.size(); position++) {
-            TextView textView = new TextView(getContext());
-            textView.setText(itemTexts.get(position));
-            textView.setGravity(Gravity.CENTER);
-            textView.setTextColor(mItemTextColor);
-            textView.setTextSize(30);
-            textView.setGravity(Gravity.CENTER);
-            textView.setBackgroundColor(mItemBgColor);
-            textView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            ScrollIndicator.Item item = new ScrollIndicator.Item();
-            item.mItemView = textView;
-            item.mPosition = position;
-            addItem(item);
-        }
-    }
-
     public void scrollIndicator(final int position, float offset) {
+        mPosition = position;
         mLinearLayout.getLocalVisibleRect(mRect);
         mIndicator.getLocalVisibleRect(mIndicatorRect);
         View childPrevious = mItems.get(position).mItemView;
@@ -109,26 +89,24 @@ public class ScrollIndicator extends HorizontalScrollView {
             nextWidth = childNext.getWidth();
         }
 
+        int deviation = nextWidth == 0 ? 0 : nextWidth - previousWidth;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getLayoutDirection() == LAYOUT_DIRECTION_RTL) {
-            int deviation = nextWidth == 0 ? 0 : nextWidth - previousWidth;
             int newWidth = (int) (deviation * offset);
-
             mIndicator.setLeft((int) (previousLeft - newWidth - (previousWidth * offset)));
             mIndicator.setRight((int) (previousLeft + previousWidth - (previousWidth * offset)));
+            scrollTo((int)(previousLeft - getMeasuredWidth() / 2 + (previousWidth - (int) (deviation * offset)) / 2 - previousWidth * offset), getScrollY());
         } else {
-            int deviation = nextWidth == 0 ? 0 : nextWidth - previousWidth;
             int newWidth = previousWidth + (int) (deviation * offset);
-
             mIndicator.setLeft((int) (previousLeft + previousWidth * offset));
             mIndicator.setRight((int) (previousLeft + newWidth + previousWidth * offset));
-        }
-        if (position > mPosition || position < mPosition || offset == 0) {
-            scrollToItem(position);
+            scrollTo((int)(previousLeft - getMeasuredWidth() / 2 + (previousWidth + (int) (deviation * offset)) / 2 + previousWidth * offset), getScrollY());
         }
     }
 
     public void scrollToItem(int position) {
         mPosition = position;
+        if (mViewPager != null)
+            mViewPager.setCurrentItem(position);
         mLinearLayout.getLocalVisibleRect(mRect);
         mIndicator.getLocalVisibleRect(mIndicatorRect);
         if (mIndicatorRect.isEmpty())
@@ -153,9 +131,12 @@ public class ScrollIndicator extends HorizontalScrollView {
             }
         }
         smoothScrollBy(scrollX, 0);
-        if (mItemListener != null) {
-            mItemListener.onItemSelected(mItems, mItems.get(position).mItemView, position);
-        }
+        updateSelectedItem(position);
+    }
+
+    public void updateSelectedItem(int position) {
+        if (mItemListener != null)
+            mItemListener.onItemSelected(mItems.get(position).mItemView, position, mItems);
     }
 
     private void updateIndicatorLayout(int position) {
@@ -174,8 +155,7 @@ public class ScrollIndicator extends HorizontalScrollView {
 
     public interface ItemListener {
         void onItemClick(View v, int position);
-
-        void onItemSelected(List<Item> items, View v, int position);
+        void onItemSelected(View v, int position, List<Item> mItems);
     }
 
     private ItemListener mItemListener;
@@ -184,36 +164,56 @@ public class ScrollIndicator extends HorizontalScrollView {
         mItemListener = itemListener;
     }
 
-    public void setItemBgColor(int itemBgColor) {
-        mItemBgColor = itemBgColor;
+    public void setViewPager(ViewPager viewPager) {
+        mViewPager = viewPager;
+        mViewPager.addOnPageChangeListener(new PageChangeListener());
     }
 
-    public int getItemBgColor() {
-        return mItemBgColor;
+    public void setAdapter(PagerAdapter adapter) {
+        mAdapter = adapter;
+        if (mViewPager != null)
+            mViewPager.setAdapter(adapter);
     }
 
-    public void setItemTextColor(int itemTextColor) {
-        mItemTextColor = itemTextColor;
+    public void addOnPageChangeListener(ViewPager.OnPageChangeListener onPageChangeListener) {
+        mOnPageChangeListener = onPageChangeListener;
     }
 
-    public int getItemTextColor() {
-        return mItemTextColor;
-    }
+    private class PageChangeListener implements ViewPager.OnPageChangeListener {
+        private int curPos;
+        private boolean isPageChange;
+        private int curState;
 
-    public int getItemSelectedBgColor() {
-        return mItemSelectedBgColor;
-    }
+        @Override
+        public void onPageScrollStateChanged(int state) {
+            if (mOnPageChangeListener != null)
+                mOnPageChangeListener.onPageScrollStateChanged(state);
+            curState = state;
+            if (ViewPager.SCROLL_STATE_IDLE == state && isPageChange) {
+                updateSelectedItem(curPos);
+                isPageChange = false;
+            }
+        }
 
-    public void setItemSelectedBgColor(int itemSelectedBgColor) {
-        mItemSelectedBgColor = itemSelectedBgColor;
-    }
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            if (mOnPageChangeListener != null)
+                mOnPageChangeListener.onPageScrolled(position, positionOffset, positionOffsetPixels);
+            scrollIndicator(position, positionOffset);
+        }
 
-    public int getItemSelectedTextColor() {
-        return mItemSelectedTextColor;
-    }
+        @Override
+        public void onPageSelected(int position) {
+            if (mOnPageChangeListener != null)
+                mOnPageChangeListener.onPageSelected(position);
+            curPos = position;
+            if (ViewPager.SCROLL_STATE_IDLE == curState) {
+                updateSelectedItem(curPos);
+            } else {
+                isPageChange = true;
+            }
+        }
 
-    public void setItemSelectedTextColor(int itemSelectedTextColor) {
-        mItemSelectedTextColor = itemSelectedTextColor;
     }
 
     public static class Item {
