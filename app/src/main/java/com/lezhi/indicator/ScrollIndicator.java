@@ -1,7 +1,6 @@
 package com.lezhi.indicator;
 
 import android.content.Context;
-import android.graphics.Rect;
 import android.os.Build;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -22,17 +21,15 @@ import java.util.List;
 
 public class ScrollIndicator extends HorizontalScrollView {
 
-    private Rect mIndicatorRect;
-    private Rect mRect;
     private FrameLayout mContentLayout;
     private LinearLayout mLinearLayout;
 
     private View mIndicator;
-    private int mPosition;
     private List<Item> mItems;
     private ViewPager mViewPager;
     private ViewPager.OnPageChangeListener mOnPageChangeListener;
-    private PagerAdapter mAdapter;
+    private float mOffset;
+    private boolean mFirstLayout = true;
 
     public ScrollIndicator(Context context) {
         this(context, null);
@@ -42,8 +39,6 @@ public class ScrollIndicator extends HorizontalScrollView {
         super(context, attrs);
         setHorizontalScrollBarEnabled(false);
         mItems = new ArrayList<Item>();
-        mRect = new Rect();
-        mIndicatorRect = new Rect();
         mContentLayout = new FrameLayout(context);
         addView(mContentLayout, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         mLinearLayout = new LinearLayout(context);
@@ -70,17 +65,12 @@ public class ScrollIndicator extends HorizontalScrollView {
             @Override
             public void onClick(View v) {
                 mItemListener.onItemClick(v, item.mPosition);
-                scrollToItem(item.mPosition);
             }
         });
     }
 
     public void scrollIndicator(final int position, float offset) {
-        mPosition = position;
-        mLinearLayout.getLocalVisibleRect(mRect);
-        mIndicator.getLocalVisibleRect(mIndicatorRect);
         View childPrevious = mItems.get(position).mItemView;
-
         int previousLeft = childPrevious.getLeft();
         int previousWidth = childPrevious.getWidth();
         int nextWidth = 0;
@@ -94,44 +84,31 @@ public class ScrollIndicator extends HorizontalScrollView {
             int newWidth = (int) (deviation * offset);
             mIndicator.setLeft((int) (previousLeft - newWidth - (previousWidth * offset)));
             mIndicator.setRight((int) (previousLeft + previousWidth - (previousWidth * offset)));
-            scrollTo((int)(previousLeft - getMeasuredWidth() / 2 + (previousWidth - (int) (deviation * offset)) / 2 - previousWidth * offset), getScrollY());
+            scrollTo((int)(previousLeft - (getMeasuredWidth() - mOffset) + (previousWidth - (int) (deviation * offset)) / 2 - previousWidth * offset), getScrollY());
         } else {
             int newWidth = previousWidth + (int) (deviation * offset);
             mIndicator.setLeft((int) (previousLeft + previousWidth * offset));
             mIndicator.setRight((int) (previousLeft + newWidth + previousWidth * offset));
-            scrollTo((int)(previousLeft - getMeasuredWidth() / 2 + (previousWidth + (int) (deviation * offset)) / 2 + previousWidth * offset), getScrollY());
+            scrollTo((int)(previousLeft - mOffset + (previousWidth + (int) (deviation * offset)) / 2 + previousWidth * offset), getScrollY());
         }
     }
 
-    public void scrollToItem(int position) {
-        mPosition = position;
+    public void setCurrentItem(int position, boolean smoothScroll) {
+        if (!smoothScroll && !mFirstLayout)
+            scrollToItem(position);
         if (mViewPager != null)
-            mViewPager.setCurrentItem(position);
-        mLinearLayout.getLocalVisibleRect(mRect);
-        mIndicator.getLocalVisibleRect(mIndicatorRect);
-        if (mIndicatorRect.isEmpty())
-            updateIndicatorLayout(position);
-        int left = mIndicator.getLeft();
-        int right = mIndicator.getRight();
-        int width = mIndicator.getWidth();
-        int scrollX = 0;
-        if (left < mRect.left) {
-            scrollX = -width;
-            if (mIndicatorRect.isEmpty()) {
-                scrollX = -width - (mRect.left - left);
-                smoothScrollBy(scrollX, 0);
-            }
+            mViewPager.setCurrentItem(position, smoothScroll);
+    }
+
+    public void scrollToItem(int position) {
+        View childPrevious = mItems.get(position).mItemView;
+        int previousLeft = childPrevious.getLeft();
+        int previousWidth = childPrevious.getWidth();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getLayoutDirection() == LAYOUT_DIRECTION_RTL) {
+            smoothScrollTo((int)(previousLeft - (getMeasuredWidth() - mOffset) + previousWidth / 2), getScrollY());
+        } else {
+            smoothScrollTo((int)(previousLeft - mOffset + previousWidth / 2), getScrollY());
         }
-        if (right > mRect.right) {
-            scrollX = width;
-            if (mIndicatorRect.isEmpty()) {
-                scrollX = width + right - mRect.right;
-                smoothScrollBy(scrollX, 0);
-                return;
-            }
-        }
-        smoothScrollBy(scrollX, 0);
-        updateSelectedItem(position);
     }
 
     public void updateSelectedItem(int position) {
@@ -139,18 +116,10 @@ public class ScrollIndicator extends HorizontalScrollView {
             mItemListener.onItemSelected(mItems.get(position).mItemView, position, mItems);
     }
 
-    private void updateIndicatorLayout(int position) {
-        View tempView = mItems.get(position).mItemView;
-        mIndicator.getLayoutParams().width = tempView.getMeasuredWidth();
-        mIndicator.setLeft(tempView.getLeft());
-        mIndicator.setRight(tempView.getRight());
-    }
-
-
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
-        if (mIndicatorRect.isEmpty()) scrollToItem(mPosition);
+        mFirstLayout = false;
     }
 
     public interface ItemListener {
@@ -170,9 +139,12 @@ public class ScrollIndicator extends HorizontalScrollView {
     }
 
     public void setAdapter(PagerAdapter adapter) {
-        mAdapter = adapter;
         if (mViewPager != null)
             mViewPager.setAdapter(adapter);
+    }
+
+    public void setOffset(float offset) {
+        mOffset = offset;
     }
 
     public void addOnPageChangeListener(ViewPager.OnPageChangeListener onPageChangeListener) {

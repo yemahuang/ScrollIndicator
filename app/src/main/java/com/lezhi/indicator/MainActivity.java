@@ -39,12 +39,14 @@ public class MainActivity extends AppCompatActivity implements ScrollIndicator.I
         mScrollIndicator.setOnItemClick(this);
         mScrollIndicator.setIndicator(R.layout.indicator_layout);
         mScrollIndicator.setViewPager(mViewPager);
+        mScrollIndicator.setOffset(200);
         mScrollIndicator.setAdapter(new IndicatorAdapter());
+        mScrollIndicator.setCurrentItem(4, false);
     }
 
     @Override
     public void onItemClick(View v, int position) {
-        mViewPager.setCurrentItem(position, false);
+        mScrollIndicator.setCurrentItem(position, false);
     }
 
     @Override
