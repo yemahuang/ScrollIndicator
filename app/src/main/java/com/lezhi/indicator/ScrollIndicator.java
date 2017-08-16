@@ -30,6 +30,7 @@ public class ScrollIndicator extends HorizontalScrollView {
     private ViewPager.OnPageChangeListener mOnPageChangeListener;
     private float mOffset;
     private boolean mFirstLayout = true;
+    private int mPosition;
 
     public ScrollIndicator(Context context) {
         this(context, null);
@@ -48,12 +49,12 @@ public class ScrollIndicator extends HorizontalScrollView {
 
     }
 
-    public void setIndicator(View indicator) {
+    public void addIndicator(View indicator) {
         mIndicator = indicator;
         mContentLayout.addView(mIndicator);
     }
 
-    public void setIndicator(int layoutRes) {
+    public void addIndicator(int layoutRes) {
         mIndicator = LayoutInflater.from(getContext()).inflate(layoutRes, mContentLayout, false);
         mContentLayout.addView(mIndicator);
     }
@@ -94,13 +95,14 @@ public class ScrollIndicator extends HorizontalScrollView {
     }
 
     public void setCurrentItem(int position, boolean smoothScroll) {
+        mPosition = position;
         if (!smoothScroll && !mFirstLayout)
             scrollToItem(position);
         if (mViewPager != null)
             mViewPager.setCurrentItem(position, smoothScroll);
     }
 
-    public void scrollToItem(int position) {
+    private void scrollToItem(int position) {
         View childPrevious = mItems.get(position).mItemView;
         int previousLeft = childPrevious.getLeft();
         int previousWidth = childPrevious.getWidth();
@@ -111,15 +113,30 @@ public class ScrollIndicator extends HorizontalScrollView {
         }
     }
 
-    public void updateSelectedItem(int position) {
-        if (mItemListener != null)
+    private void updateSelectedItem(int position) {
+        updateIndicator(position);
+        if (mItemListener != null) {
             mItemListener.onItemSelected(mItems.get(position).mItemView, position, mItems);
+        }
+    }
+
+    private void updateIndicator(int position) {
+        MarginLayoutParams params = (MarginLayoutParams) mIndicator.getLayoutParams();
+        View tempView = mItems.get(position).mItemView;
+        params.width = tempView.getWidth();
+        mIndicator.setLeft(tempView.getLeft());
+        mIndicator.setRight(tempView.getRight());
+        params.leftMargin = mIndicator.getLeft();
+        mIndicator.setLayoutParams(params);
     }
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
-        mFirstLayout = false;
+        if (mFirstLayout) {
+            updateIndicator(mPosition);
+            mFirstLayout = false;
+        }
     }
 
     public interface ItemListener {
@@ -129,7 +146,7 @@ public class ScrollIndicator extends HorizontalScrollView {
 
     private ItemListener mItemListener;
 
-    public void setOnItemClick(ItemListener itemListener) {
+    public void setItemListener(ItemListener itemListener) {
         mItemListener = itemListener;
     }
 

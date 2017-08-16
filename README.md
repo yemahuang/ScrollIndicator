@@ -28,7 +28,7 @@ android ScrollIndicator use with ViewPager
     
     
     
-     mScrollIndicator.setOnItemClick(this);
+     mScrollIndicator.setItemListener(this);
      mScrollIndicator.setIndicator(R.layout.indicator_layout);
      mScrollIndicator.setViewPager(mViewPager);
      mScrollIndicator.setAdapter(new IndicatorAdapter());

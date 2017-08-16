@@ -36,8 +36,8 @@ public class MainActivity extends AppCompatActivity implements ScrollIndicator.I
         mViewPager = (ViewPager) findViewById(R.id.view_page);
 
         initTestData();
-        mScrollIndicator.setOnItemClick(this);
-        mScrollIndicator.setIndicator(R.layout.indicator_layout);
+        mScrollIndicator.setItemListener(this);
+        mScrollIndicator.addIndicator(R.layout.indicator_layout);
         mScrollIndicator.setViewPager(mViewPager);
         mScrollIndicator.setOffset(200);
         mScrollIndicator.setAdapter(new IndicatorAdapter());
