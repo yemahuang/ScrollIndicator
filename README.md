@@ -39,13 +39,11 @@ android ScrollIndicator
      // 设置偏移量
      mScrollIndicator.setOffset(getResources().getDisplayMetrics().widthPixels / 2);
      
-     ![image]
-     (https://github.com/yemahuang/ScrollIndicator/blob/master/offset_center.gif)
+     ![image](https://github.com/yemahuang/ScrollIndicator/blob/master/offset_center.gif)
     
     
      mScrollIndicator.setOffset(200);
     
-     ![image]
-     https://github.com/yemahuang/ScrollIndicator/blob/master/offset_200.gif
+     ![image](https://github.com/yemahuang/ScrollIndicator/blob/master/offset_200.gif)
      
      
