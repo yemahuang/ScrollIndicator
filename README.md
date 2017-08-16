@@ -1,6 +1,8 @@
 # ScrollIndicator
-android ScrollIndicator use with ViewPager
+android ScrollIndicator 
 滚动指示器，自适应不同tab的宽度
+
+参考： 网易新闻客户端分类滚动栏，斗鱼直播分类滚动栏的效果
 
     
     <LinearLayout
@@ -32,4 +34,18 @@ android ScrollIndicator use with ViewPager
      mScrollIndicator.setIndicator(R.layout.indicator_layout);
      mScrollIndicator.setViewPager(mViewPager);
      mScrollIndicator.setAdapter(new IndicatorAdapter());
+     
+     
+     // 设置偏移量
+     mScrollIndicator.setOffset(getResources().getDisplayMetrics().widthPixels / 2);
+     
+     ![image]
+     (https://github.com/yemahuang/ScrollIndicator/blob/master/offset_center.gif)
+    
+    
+     mScrollIndicator.setOffset(200);
+    
+     ![image]
+     https://github.com/yemahuang/ScrollIndicator/blob/master/offset_200.gif
+     
      

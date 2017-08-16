@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity implements ScrollIndicator.I
         mScrollIndicator.setItemListener(this);
         mScrollIndicator.addIndicator(R.layout.indicator_layout);
         mScrollIndicator.setViewPager(mViewPager);
-        mScrollIndicator.setOffset(200);
+        mScrollIndicator.setOffset(getResources().getDisplayMetrics().widthPixels / 2);
         mScrollIndicator.setAdapter(new IndicatorAdapter());
         mScrollIndicator.setCurrentItem(4, false);
     }
