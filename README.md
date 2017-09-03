@@ -45,5 +45,9 @@ android ScrollIndicator
      mScrollIndicator.setOffset(200);
     
 ![Alt Text](https://github.com/yemahuang/ScrollIndicator/blob/master/offset_200.gif)
+
+    类似今日头条切换tab
+
+![Alt Text](https://github.com/yemahuang/ScrollIndicator/blob/master/indicator_text.gif)
      
      
