@@ -2,9 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
-    <TextView
+    <com.lezhi.indicator.IndicatorTextView
         android:id="@+id/tag_text"
         android:paddingLeft="20dp"
         android:paddingRight="20dp"
@@ -14,6 +15,8 @@
         android:paddingBottom="10dp"
         android:textSize="20dp"
         android:textStyle="bold"
+        app:selectedColor="@color/colorAccent"
+        app:normalColor="@android:color/darker_gray"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 

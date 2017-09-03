@@ -51,6 +51,9 @@ public class MainActivity extends AppCompatActivity implements ScrollIndicator.I
 
     @Override
     public void onItemSelected(View v, int position, List<ScrollIndicator.Item> mItems) {
+        if (v.findViewById(R.id.tag_text) instanceof IndicatorTextView) {
+            return;
+        }
         for (ScrollIndicator.Item item : mItems) {
             TextView textView = (TextView) item.mItemView.findViewById(R.id.tag_text);
             textView.setTextColor(Color.GRAY);

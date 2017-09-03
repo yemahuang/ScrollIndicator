@@ -78,7 +78,11 @@ public class ScrollIndicator extends HorizontalScrollView {
         if (position < mItems.size() - 1) {
             View childNext = mItems.get(position + 1).mItemView;
             nextWidth = childNext.getWidth();
+            IndicatorTextView indicatorTextView = (IndicatorTextView) childNext.findViewById(R.id.tag_text);
+            indicatorTextView.updateRect(offset, true);
         }
+        IndicatorTextView indicatorTextView = (IndicatorTextView) childPrevious.findViewById(R.id.tag_text);
+        indicatorTextView.updateRect(offset, false);
 
         int deviation = nextWidth == 0 ? 0 : nextWidth - previousWidth;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getLayoutDirection() == LAYOUT_DIRECTION_RTL) {
@@ -92,6 +96,8 @@ public class ScrollIndicator extends HorizontalScrollView {
             mIndicator.setRight((int) (previousLeft + newWidth + previousWidth * offset));
             scrollTo((int)(previousLeft - mOffset + (previousWidth + (int) (deviation * offset)) / 2 + previousWidth * offset), getScrollY());
         }
+
+
     }
 
     public void setCurrentItem(int position, boolean smoothScroll) {
